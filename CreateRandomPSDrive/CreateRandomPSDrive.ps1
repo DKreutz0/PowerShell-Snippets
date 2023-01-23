@@ -11,11 +11,11 @@ Function CreateRandomPSDrive {
 
             -Path can be a local folder or networkshare
 
-            -path "C:\"
+            -Path "C:\"
             -Path "\\localhost\C$"
 
         .PARAMETER ExcludeDriveLetters
-            can be a array
+            Can be a array
         
             -ExcludeDriveLetter "A"
             -ExcludeDriveLetter "A","B"
@@ -40,6 +40,13 @@ Function CreateRandomPSDrive {
         Name           Used (GB)     Free (GB) Provider      Root                                                                            
         ----           ---------     --------- --------      ----                                                                           
         R                   0,00        819,15 FileSystem    C:\Documents and Settings                                                                      
+
+        .EXAMPLE
+        PS> CreateRandomPSDrive -Path "\\192.168.1.\share$" -ExcludeDriveLetter "A","B" -Description "subst from C:" -Credentials $(Get-Credential)
+
+        Name           Used (GB)     Free (GB) Provider      Root                                                                           
+        ----           ---------     --------- --------      ----                                                                          
+        K                 711,72        1819,15 FileSystem    \\\192.168.1.\share$    
 
         .LINK
         Online version: https://github.com/DKreutz0/PSSnippits/tree/main/CreateRandomPSDrive

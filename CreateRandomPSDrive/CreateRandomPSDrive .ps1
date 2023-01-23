@@ -13,7 +13,7 @@ Function CreateRandomPSDrive {
             -Path can be a local folder or networkshare
 
             -path "C:\"
-            -Path "\\localhost\C$"
+            -Path "\\localhost'\C$"
 
         .PARAMETER ExcludeDriveLetters
             can be a array
@@ -43,16 +43,6 @@ Function CreateRandomPSDrive {
             Name           Used (GB)     Free (GB) Provider      Root                                                                            CurrentLocation
             ----           ---------     --------- --------      ----                                                                            ---------------
             R                   0,00        819,15 FileSystem    C:\Documents and Settings                                                                      
-        .EXAMPLE
-        PS> 
-        CreateRandomPSDrive -Path "\\DESKTOP-RC3MQDF\Scripts$" -ExcludeDriveLetter "A","B" -Description "subst from C:" -Credentials $(Get-Credential)
-
-            cmdlet Get-Credential at command pipeline position 1
-            Supply values for the following parameters:
-
-            Name           Used (GB)     Free (GB) Provider      Root                                                                            CurrentLocation
-            ----           ---------     --------- --------      ----                                                                            ---------------
-            G                 111,53        819,37 FileSystem    \\DESKTOP-RC3MQDF\Scripts$                                                                     
 
         .LINK
         Online version: https://github.com/DKreutz0/PSSnippits/tree/main/CreateRandomPSDrive
@@ -81,14 +71,23 @@ Function CreateRandomPSDrive {
     $InUseDrivesLetters = $InUseDrivesLetters + $ExcludeDriveLetters | Sort-Object -Unique
 
     do {
-        $RandomDriveLetter = -join ((67..90) | Get-Random -Count 1 | foreach { [char]$_ })
+        $RandomDriveLetter = -join ((65..90) | Get-Random -Count 1 | ForEach-Object { [char]$_ })
     }until($RandomDriveLetter -notin $InUseDrivesLetters)
 
     Switch ($([System.Uri]$path).IsUnc) {
 
-        $true {  New-PSDrive -Name $RandomDriveLetter -PSProvider FileSystem -Root $Path -Persist -Scope Global -Credential $Credentials }
-        $False { New-PSDrive -Name $RandomDriveLetter -PSProvider FileSystem -Root $Path -Description $Description -Scope Global -Credentials Get-Credential }
+        $true {  New-PSDrive -Name $RandomDriveLetter -PSProvider FileSystem -Root $Path -Persist -Scope Global -Credential $Credentials -ErrorAction Stop }
+        $False { New-PSDrive -Name $RandomDriveLetter -PSProvider FileSystem -Root $Path -Description $Description -Scope Global -Credentials Get-Credential -ErrorAction Stop }
 
     }
 }
 
+<# Example Code 
+try {
+
+    CreateRandomPSDrive -Path "\\127.0.0.1\Scripts$" -ExcludeDriveLetter "A","B" -Description "NetworkShare" -Credentials $(Get-Credential)
+}
+catch  {
+    Write-Output  $Error[0].Exception -NoEnumerate
+}
+#>

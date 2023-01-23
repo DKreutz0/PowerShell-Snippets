@@ -1,78 +1,58 @@
 <#
 +---------------+--------------------------------------------------------------------------------+
-| Script        | CheckCRL-CA.ps1                                                                |
+| Script        | CheckCRL-URL.ps1                                                               |
 | Version       | 1.0                                                                            |
 | Documentation | ToDo                                                                           |
 +---------------+--------------------------------------------------------------------------------+
 | Korte Omschrijving:                                                                            |
-|   Script voor het ophalem en controleren op de geldigehid van de CRL's                         |
+|   PowerShell Script for validation CRL-validity                                                |
 +----------------------+-------------------------------------------------------------------------+
 #>
 
-if (!($(Get-Location).Path -eq [System.Environment]::SystemDirectory)) { Set-Location $([System.Environment]::SystemDirectory) }
+try
+{
+    $Urls = "http://crl.quovadisglobal.com/quovadispkioverheidserverca2020.crl","http://crl4.digicert.com/DigiCertHighAssuranceEVRootCA.crl"
 
-if ($(Resolve-Path certutil.exe).Path) {
+    $TLS12Protocol = [System.Net.SecurityProtocolType] 'Ssl3 , Tls12'
+    [System.Net.ServicePointManager]::SecurityProtocol = $TLS12Protocol
 
-    # Search for CRL'S in the RootCertificate(s)
-    $FoundCA = .\certutil.exe -dump | Select-String "Config:" | ForEach-Object { $_.line.replace("Config:",([string]::Empty)).trim().replace("``",([string]::Empty)).replace("'",([string]::Empty))}
+    if (!($(Get-Location).Path -eq [System.Environment]::SystemDirectory)) { Set-Location $([System.Environment]::SystemDirectory) }
 
-    if ($FoundCA) {
+    if ($(Resolve-Path certutil.exe).Path)  {
+        foreach ($Url in $Urls) {
 
-        $DummyFile  = New-TemporaryFile | Select-Object -ExpandProperty FullName
-        $Today = Get-Date
-
-        foreach ( $CurrentCA in $FoundCA) {
-
-            Remove-Item $DummyFile -Force -ErrorAction SilentlyContinue
-            [void](certutil.exe -config "$($CurrentCA)" -getcrl "$($DummyFile)")
-
-            $FoundUrls = .\certutil.exe -dump "$($DummyFile)" | Select-String "\.crl" | ForEach-Object { $_.line.replace("URL=", ([string]::Empty)).Trim() }
-            $ExpirationDate = [System.DateTime]::ParseExact($(get-date($(.\certutil.exe -Dump $DummyFile | Select-String "NextUpdate:").Line.Trim().Replace("NextUpdate: ", $([string]::Empty))) -format ($(Get-Culture).DateTimeFormat.ShortDatePattern)), $(Get-Culture).DateTimeFormat.ShortDatePattern, ([Globalization.CultureInfo]::CreateSpecificCulture($(Get-Culture).Name)))
-            $CompareDatesCA = New-TimeSpan -Start $Today -End $ExpirationDate
-            if (($CompareDatesCA).Days -gt 30) {
-                Write-Host "CRL from ROOTCA [ $($CurrentCA) ] with NextUpdate $ExpirationDate is still valid for $(($CompareDatesCA).Days) days" -ForegroundColor Green
-            }
-            elseif (($CompareDatesCA).Days -gt 0 ){
-                Write-Host "CRL from ROOTCA [ $($CurrentCA) ] with NextUpdate $ExpirationDate will expire in $(($CompareDatesCA).Days) days " -ForegroundColor Magenta
-            }
-            else {
-                 Write-Host "CRL from ROOTCA [ $($CurrentCA) ] with NextUpdate $ExpirationDate is already $(($CompareDatesCA).Days) days expired " -ForegroundColor Red
-            }
-        }
-        # Search for distribution points in the RootCertificate(s)
-        foreach ($Url in $FoundUrls) {
-            $DownLoadPath = $(New-TemporaryFile).FullName
-            $WebRequest = Invoke-WebRequest -Uri $Url -OutFile $DownLoadPath -PassThru
+            $DownloadPath = Join-Path $ENV:TEMP ($Url).Split("/")[$(($Url.ToCharArray() | Where-Object { $_ -eq '/' } | Measure-Object).Count)]
+            $WebRequest = Invoke-WebRequest -Uri $Url -OutFile $DownloadPath -PassThru
 
             if ($WebRequest.StatusCode -eq 200) {
-                $ExpirationDate = [System.DateTime]::ParseExact($(Get-Date(.\certutil.exe -Dump $DummyFile | Select-String "NextUpdate:").Line.Trim().Replace("NextUpdate: ", $([string]::Empty)) -Format 'dd-MM-yyyy HH:mm'), "dd-MM-yyyy HH:mm", $null)
-                $CompareDatesCA = New-TimeSpan -Start $Today -End $ExpirationDate
-                $strSubMsg  = ([string]::Empty)
+                $ExpirationDate = [System.DateTime]::ParseExact($(get-date($(.\certutil.exe -Dump $DownloadPath | Select-String "NextUpdate:").Line.Trim().Replace("NextUpdate: ", $([string]::Empty))) -format ($(Get-Culture).DateTimeFormat.ShortDatePattern)), $(Get-Culture).DateTimeFormat.ShortDatePattern, ([Globalization.CultureInfo]::CreateSpecificCulture($(Get-Culture).Name)))
+                $CompareDates = New-TimeSpan -Start $((Get-Date -Format "dd/MM/yyyy")).ToString() -End $Expirationdate -ErrorAction Stop
+                $Count = ($DownloadPath.ToCharArray() | Where-Object { $_ -eq '\' } | Measure-Object).Count
 
-                if (($CompareDatesCA).Days -ne $CompareDatesCA.Days) { $strSubMsg = " - This CRL is different from the CA " } 
-                if (($CompareDatesCA).Days -gt 30) {
-                    Write-Host "CRL from Distributionpoint [ $($Url) ] with NextUpdate $ExpirationDate is still valid for $(($CompareDatesCA).Days) days" -NoNewline -ForegroundColor Green
-                }
-                elseif (($CompareDatesCA).Days -gt 0 ){
-                    Write-Host "CRL from Distributionpoint [ $($Url) ] with NextUpdate $ExpirationDate will expire in $(($CompareDatesCA).Days) days " -NoNewline -ForegroundColor Magenta
+                if (($CompareDates).days -gt 15) {
+                    Write-Host "CRL $(($DownloadPath).Split("\")[$count]) with NextUpdate $(Get-Date($ExpirationDate) -Format $(Get-Culture).DateTimeFormat.ShortDatePattern) is still valid for $($($CompareDates).Days) days `n" -ForegroundColor Green
                 }
                 else {
-                     Write-Host "CRL from Distributionpoint [ $($Url) ] with NextUpdate $ExpirationDate is already $(($CompareDatesCA).Days) days expired " -NoNewline -ForegroundColor Red
+                    if (($CompareDates).days -gt 0) {
+                        Write-Host "CRL $(($DownloadPath).Split("\")[$Count]) with NextUpdate $(Get-Date($ExpirationDate) -Format $(Get-Culture).DateTimeFormat.ShortDatePattern) will expire in $($($CompareDates).Days) days " -ForegroundColor Magenta
+                    }
+                    else {
+                        Write-Host "CRL $(($DownloadPath).Split("\")[$Count]) with NextUpdate $(Get-Date($ExpirationDate) -Format $(Get-Culture).DateTimeFormat.ShortDatePattern) is already $($($CompareDates).Days) days expired " -ForegroundColor Red
+                    }
                 }
-                if ($strSubMsg.Trim() -eq ([string]::Empty)) { Write-Host "" } else { Write-Host "$($strSubMsg)" -ForegroundColor White -BackgroundColor Red }
-                Remove-Item -Path $DownLoadPath -Force
-
             }
             else {
-                throw("Unable to download file $( $WebRequest.StatusCode + " "  + $WebRequest.StatusDescription) $Error[0] ")
+                throw("Cannot connect to the url: $($WebRequest.BaseResponse.ResponseUri) with status: $($WebRequest.StatusDescription) and statuscode: $($WebRequest.StatusCode)")
             }
         }
     }
     else {
-        Throw("No Certificate autorities could be found or retrieved")
+        throw("Certutil.exe cannot be found in $(Get-Location)!")
     }
-    Remove-Variable ResolvedPath,FoundCA,DummyFile,Today,currentCA,FoundUrls,ExpirationDate,CompareDatesCA,Url,FoundUrls,DownLoadPath,WebRequest,strSubMsg -ErrorAction SilentlyContinue
 }
-else {
-    throw("Certutil can't be found.")
+catch {
+    throw("$($error[0])")
+}
+finally {
+    Remove-Variable DownloadPath,DumpCrl,Expirationdate,Url,Urls,CompareDates,Count,WebRequest,TLS12Protocol -ErrorAction SilentlyContinue
 }

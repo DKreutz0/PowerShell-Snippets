@@ -1,4 +1,4 @@
-# PSSnippits
+#PowerShell-Snippets
 Powershell Snippets
 
 Just a Bunch of PowerShell snippets.

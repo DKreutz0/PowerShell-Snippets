@@ -74,7 +74,7 @@ Function CreateRandomPSDrive {
     $InUseDrivesLetters = $InUseDrivesLetters + $ExcludeDriveLetters | Sort-Object -Unique
 
     do {
-        $RandomDriveLetter = -join ((67..90) | Get-Random -Count 1 | foreach { [char]$_ })
+        $RandomDriveLetter = -join ((65..90) | Get-Random -Count 1 | foreach { [char]$_ })
     }until($RandomDriveLetter -notin $InUseDrivesLetters)
 
     Switch ($([System.Uri]$path).IsUnc) {

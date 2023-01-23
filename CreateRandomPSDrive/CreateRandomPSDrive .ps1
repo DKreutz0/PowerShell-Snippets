@@ -13,7 +13,7 @@ Function CreateRandomPSDrive {
             -Path can be a local folder or networkshare
 
             -path "C:\"
-            -Path "\\localhost'\C$"
+            -Path "\\localhost\C$"
 
         .PARAMETER ExcludeDriveLetters
             can be a array

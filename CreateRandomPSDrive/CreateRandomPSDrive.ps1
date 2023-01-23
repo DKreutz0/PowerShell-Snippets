@@ -35,24 +35,21 @@ Function CreateRandomPSDrive {
         PS> CreateRandomPSDrive -Path "\\localhost\C$" -ExcludeDriveLetter "A","B" -Description "TESTING"
 
         .EXAMPLE
-        PS> CreateRandomPSDrive -Path "C:\Documents and Settings" -ExcludeDriveLetter "A","B" -Description "subst from C:"
+        PS> CreateRandomPSDrive -Path "C:\Documents and Settings" -ExcludeDriveLetter "A","B" -Description "subst from C:\Documents and Settings"
 
-        Name           Used (GB)     Free (GB) Provider      Root                                                                            
-        ----           ---------     --------- --------      ----                                                                           
-        R                   0,00        819,15 FileSystem    C:\Documents and Settings                                                                      
+            Name           Used (GB)     Free (GB) Provider      Root                                                                            
+            ----           ---------     --------- --------      ----                                                                           
+            R                   0,00        819,15 FileSystem    C:\Documents and Settings                                                                      
 
         .EXAMPLE
-        PS> CreateRandomPSDrive -Path "\\192.168.1.\share$" -ExcludeDriveLetter "A","B" -Description "subst from C:" -Credentials $(Get-Credential)
+        PS> CreateRandomPSDrive -Path "\\192.168.1.\share$" -ExcludeDriveLetter "A","B"  -Credentials $(Get-Credential)
 
-        Name           Used (GB)     Free (GB) Provider      Root                                                                           
-        ----           ---------     --------- --------      ----                                                                          
-        K                 711,72        1819,15 FileSystem    \\\192.168.1.\share$    
+            Name           Used (GB)     Free (GB) Provider      Root                                                                           
+            ----           ---------     --------- --------      ----                                                                          
+            K                 711,72        1819,15 FileSystem    \\\192.168.1.\share$    
 
         .LINK
         Online version: https://github.com/DKreutz0/PSSnippits/tree/main/CreateRandomPSDrive
-
-        .LINK
-        Set-Item
     #>
 
     [CmdletBinding()]

@@ -45,7 +45,7 @@ Function CreateRandomPSDrive {
         R                   0,00        819,15 FileSystem    C:\Documents and Settings                                                                      
 
         .LINK
-        Online version: http://www.fabrikam.com/extension.html
+        Online version: https://github.com/DKreutz0/PSSnippits/tree/main/CreateRandomPSDrive
 
         .LINK
         Set-Item

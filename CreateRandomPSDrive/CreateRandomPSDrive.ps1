@@ -1,5 +1,4 @@
 Function CreateRandomPSDrive {
-
     <#
         .SYNOPSIS
         Create a usable PSDrive Letter 
@@ -26,7 +25,6 @@ Function CreateRandomPSDrive {
         
             -Credentials $(Get-Credential)   
 
-
         .EXAMPLE
         PS> CreateRandomPSDrive -Path "\\localhost\C$" -ExcludeDriveLetter "A","B" 
 
@@ -35,7 +33,6 @@ Function CreateRandomPSDrive {
             Z                 111,74        819,15 FileSystem    \\localhost\C$                                                                                 
 
         PS> CreateRandomPSDrive -Path "\\localhost\C$" -ExcludeDriveLetter "A","B" -Description "TESTING"
-
 
         .EXAMPLE
         PS> CreateRandomPSDrive -Path "C:\Documents and Settings" -ExcludeDriveLetter "A","B" -Description "subst from C:"
@@ -83,3 +80,4 @@ Function CreateRandomPSDrive {
 
     }
 }
+

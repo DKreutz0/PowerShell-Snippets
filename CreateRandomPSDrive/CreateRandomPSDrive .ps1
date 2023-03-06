@@ -79,10 +79,9 @@ Function CreateRandomPSDrive {
     }
 }
 
-<# Example Code 
+<# Example Code
 try {
-
-    CreateRandomPSDrive -Path "\\127.0.0.1\Scripts$" -ExcludeDriveLetter "A","B" -Description "NetworkShare" -Credentials $(Get-Credential)
+    CreateRandomPSDrive -Path "\\127.0.0.1\c$" -ExcludeDriveLetter "A","B" -Description "NetworkShare" #-Credentials $(Get-Credential)
 }
 catch  {
     Write-Output  $Error[0].Exception -NoEnumerate

@@ -47,47 +47,46 @@ else {
 
             switch ($Action) {
 
-                START { $Global:ReturnResponse = $StartServices | foreach { Start-Service -Name $_  -PassThru } }
-                STOP { $Global:ReturnResponse = $StopServices | foreach { Stop-Service -Name $_ -Force -PassThru -ErrorAction Stop } }
-                GET { $Global:ReturnResponse = $Services | foreach { Get-Service -Name $_ } }
+                START { $Global:ReturnResponse = $StartServices | ForEach-Object { Start-Service -Name $_  -PassThru } }
+                STOP { $Global:ReturnResponse = $StopServices | ForEach-Object { Stop-Service -Name $_ -Force -PassThru -ErrorAction Stop } }
+                GET { $Global:ReturnResponse = $Services | ForEach-Object { Get-Service -Name $_ } }
             }        
 
             if ($ReturnResponseOutput) {
                 return $ReturnResponse
             }
     }
-
     Function ResetWSUS {
         
         $ComputerInfo = Get-ComputerInfo
 
         if ($($ComputerInfo.OsName -replace "[\Wa-zA-Z]","") -lt '11') {            
             if (Test-Path -Path "$ENV:ALLUSERSPROFILE\Application Data\Microsoft\Network\Downloader\" -PathType Container) {                
-                Write-Host "`n Creating Backup files from the qmgr files and deleting the original files> Microsoft Windows updates uses these file for caching. for Windows 10 or below `n" 
+                Write-Host "`n Creating Backup files from the qmgr files and deleting the original files> Microsoft Windows updates uses these file for caching. for Windows 10 or below " 
                 $Files = Get-ChildItem "$ENV:ALLUSERSPROFILE\Application Data\Microsoft\Network\Downloader\qmgr*.*" | Where-Object { $_.Extension -eq ".dat" }
-                Write-Host "`n $($Files) Found, Creating backup `n"
-                $Files | foreach {            
+                Write-Host "`n $($Files) Found, Creating backup "
+                $Files | ForEach-Object {            
                     $RenamedFile = $($_.Fullname + ".bak")            
                     Copy-Item -Path $_.Fullname -Destination $RenamedFile -WhatIf     
                     if (Test-Path -Path $RenamedFile) {
-                        Write-Host "`n $($RenamedFile) Found, Deleting original file $($_.fullname) `n"
+                        Write-Host "`n $($RenamedFile) Found, Deleting original file $($_.fullname) "
                         Remove-Item $_.FullName -Force -WhatIf
                     }
                 }
             }
             else {
-                Write-Host "$ENV:ALLUSERSPROFILE\Application Data\Microsoft\Network\Downloader\ Folder not found, skipping... `n"  -ForegroundColor white -BackgroundColor red 
+                Write-Host "`n $("$ENV:ALLUSERSPROFILE\Application Data\Microsoft\Network\Downloader\") Folder not found, skipping... "  -ForegroundColor white -BackgroundColor red 
             }
         }
         else {
-            Write-Host "`n $($ComputerInfo.OsName) detected, skipping step for qmgr backup/deletion `n" -ForegroundColor White -BackgroundColor Green
+            Write-Host "`n $($ComputerInfo.OsName) detected, skipping step for qmgr backup/deletion " -ForegroundColor White -BackgroundColor Green
         }
 
         $MicrosoftWindowsUpdateFolders = New-Object -TypeName System.Collections.ArrayList
         $TMPMicrosoftWindowsUpdateFolders = New-Object -TypeName System.Collections.ArrayList
         $MicrosoftWindowsUpdateFolders = @("%Systemroot%\SoftwareDistribution\DataStore","%Systemroot%\SoftwareDistribution\Download","%Systemroot%\System32\catroot2")
 
-        $MicrosoftWindowsUpdateFolders  | foreach {
+        $MicrosoftWindowsUpdateFolders  | ForEach-Object {
             if ($_.split("\").StartsWith("%") -and $_.split("\").EndsWith("%")) {
                 $TMPMicrosoftWindowsUpdateFolders += [System.Environment]::ExpandEnvironmentVariables($_)
             }       
@@ -96,18 +95,16 @@ else {
         $MicrosoftWindowsUpdateFolders = $TMPMicrosoftWindowsUpdateFolders 
         Remove-Variable $TMPMicrosoftWindowsUpdateFolders -ErrorAction SilentlyContinue
 
-        $MicrosoftWindowsUpdateFolders | foreach {
+        $MicrosoftWindowsUpdateFolders | ForEach-Object {
             if (Test-Path -Path $_ -PathType Container) {
-                Write-Host "`n $($_) Folder found, Creating backup folder `n"  -ForegroundColor white -BackgroundColor Green
+                Write-Host "`n $($_) Folder found, Creating backup folder "  -ForegroundColor white -BackgroundColor Green
                 
                 $RenameFolder = "$($_).bak"                
                 Copy-Item -Path $_ -Destination $RenameFolder -Force -Recurse -WhatIf
                 if (Test-Path -Path $RenameFolder) { 
-                     Write-Host "`n $($RenameFolder) Folder found, Deleting folder $_ `n"  -ForegroundColor white -BackgroundColor Green
+                     Write-Host "`n $($RenameFolder) Folder found, Deleting folder $_ "  -ForegroundColor white -BackgroundColor Green
                      Remove-Item -Path $_ -Force -Recurse -WhatIf
-                }
-                    
-
+                }                
             }
             else{
                 Write-Host "$($_) Folder not found, skipping... `n"  -ForegroundColor white -BackgroundColor red
@@ -115,7 +112,7 @@ else {
         }
 
         #Reset the BITS service and the Windows Update service to the default security descriptors.
-        Write-Host "`nReset the BITS service and the Windows Update service to the default security descriptor. `n"        
+        Write-Host "`n Reset the BITS service and the Windows Update service to the default security descriptor."        
         cmd.exe /c "sc.exe sdset bits D:(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWLOCRRC;;;AU)(A;;CCLCSWRPWPDTLOCRRC;;;PU)"
         cmd.exe /c "sc.exe sdset wuauserv D:(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWLOCRRC;;;AU)(A;;CCLCSWRPWPDTLOCRRC;;;PU)"
         Reset-WinhttpProxy -Direct
@@ -132,7 +129,7 @@ else {
         $ListOfRegisteredDLLFiles = New-Object -TypeName System.Collections.ArrayList
         $RegisteredDLLFiles = @("atl.dll", "urlmon.dll", "mshtml.dll", "shdocvw.dll", "browseui.dll", "jscript.dll", "vbscript.dll", "scrrun.dll", "msxml.dll", "msxml3.dll", "msxml6.dll", "actxprxy.dll", "softpub.dll", "wintrust.dll", "dssenh.dll", "rsaenh.dll", "gpkcsp.dll", "sccbase.dll", "slbcsp.dll", "cryptdlg.dll", "oleaut32.dll", "ole32.dll", "shell32.dll", "initpki.dll", "wuapi.dll", "wuaueng.dll", "wuaueng1.dll", "wucltui.dll", "wups.dll", "wups2.dll", "wuweb.dll", "qmgr.dll", "qmgrprxy.dll", "wucltux.dll", "muweb.dll", "wuwebv.dll")
     
-        foreach ($DLLFile in $RegisteredDLLFiles) {
+        ForEach ($DLLFile in $RegisteredDLLFiles) {
            Write-Progress -Activity "Registering DLL-Files in $($ComputerInfo.OsName) for Microsoft Windows Updates to work properly" -Status "Registering $DLLFile" -PercentComplete (((1+$RegisteredDLLFiles.IndexOf($DLLFile))/ $RegisteredDLLFiles.Count)*100)
            if(Test-Path -Path "$($env:windir)\System32\$($DLLFile)" -PathType Leaf){
 	           $ProcessStartInfo = New-Object Diagnostics.ProcessStartInfo
@@ -155,23 +152,23 @@ else {
     }
     Function RunResetWUS {
         $Error.Clear()
-        $Services = "BITS","wuauserv","appidsvc","cryptsvc"
+        $Services = New-Object -TypeName System.Collections.ArrayList
+        $Services = @("BITS","wuauserv","appidsvc","cryptsvc")
         ServiceHandler -Action GET -ReturnResponseOutput False
-    
         $StopServices = New-Object -TypeName System.Collections.ArrayList
-        $ReturnResponse | foreach {   
+        $ReturnResponse | ForEach-Object {   
             if ($_.status -ne "Stopped") {        
                     $StopServices += $_.name
             }
         }
-        Write-Host "Stopping Services" -ForegroundColor White -BackgroundColor Green
+        Write-Host "`n Stopping Services" -ForegroundColor White -BackgroundColor Green
         ServiceHandler -Action STOP -ReturnResponseOutput True
 
         if (($ReturnResponse.Status | Sort-Object -Unique).count -eq "1") {
             ResetWSUS
             $StartServices = New-Object -TypeName System.Collections.ArrayList
             ServiceHandler -Action GET -ReturnResponseOutput False
-            $ReturnResponse | foreach {   
+            $ReturnResponse | ForEach-Object {   
                 if ($_.status -ne "Started") {        
                         $StartServices += $_.name
                 }
@@ -280,9 +277,9 @@ else {
                     RestoreDismSystemHealth 
                   }
                 8 {
-                    Write-Host "`n You've pressed choice $($choice): The script will be quitting in 5 seconds..." -BackgroundColor red -ForegroundColor white
+                    Write-Host "`n You've pressed choice $($Select): The script will be quitting in 5 seconds..." -BackgroundColor red -ForegroundColor white
                     Start-Sleep 3
-                    Write-Host "GoodBye" -BackgroundColor red -ForegroundColor white
+                    Write-Host " GoodBye" -BackgroundColor red -ForegroundColor white
                     Start-Sleep 2
                     Exit
                 }

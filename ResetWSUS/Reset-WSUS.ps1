@@ -14,10 +14,22 @@ https://gist.github.com/mavaddat/24a03fd07aa059806d58c39b06acee70#file-resetwind
 #>
 
 
-if ((New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    
-    if (!($(Get-Location).Path -eq [System.Environment]::SystemDirectory)) { Set-Location $([System.Environment])::SystemDirectory }
+if (!((New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)))  {
+    if ($elevated) {
+        Write-Host "Cannot become a privileged user. The script is aborting" -BackgroundColor red -ForegroundColor white
+        Start-Sleep 5
+        Exit
+    } else {
+        Start-Process powershell.exe -Verb RunAs -ArgumentList ('-noprofile -noexit -file "{0}" -elevated' -f ($myinvocation.MyCommand.Definition))
+    }
+    exit
+}
 
+if (!((New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))) {
+    Write-Host "Cannot proceed, Please run this script as administrator" -BackgroundColor White -ForegroundColor Red
+}
+else {
+ 
     Function ServiceHandler {
         [cmdletbinding()]
             Param 
@@ -141,48 +153,141 @@ if ((New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsI
 	    sc.exe config TrustedInstaller start= demand
 	    sc.exe config DcomLaunch start= auto
     }
-
-    $Error.Clear()
-    $Services = "BITS","wuauserv","appidsvc","cryptsvc"
-    ServiceHandler -Action GET -ReturnResponseOutput False
-    
-    $StopServices = New-Object -TypeName System.Collections.ArrayList
-    $ReturnResponse | foreach {   
-       if ($_.status -ne "Stopped") {        
-             $StopServices += $_.name
-       }
-    }
-    Write-Host "Stopping Services" -ForegroundColor White -BackgroundColor Green
-    ServiceHandler -Action STOP -ReturnResponseOutput True
-
-    if (($ReturnResponse.Status | Sort-Object -Unique).count -eq "1") {
-        ResetWSUS
-        $StartServices = New-Object -TypeName System.Collections.ArrayList
+    Function RunResetWUS {
+        $Error.Clear()
+        $Services = "BITS","wuauserv","appidsvc","cryptsvc"
         ServiceHandler -Action GET -ReturnResponseOutput False
+    
+        $StopServices = New-Object -TypeName System.Collections.ArrayList
         $ReturnResponse | foreach {   
-           if ($_.status -ne "Started") {        
-                 $StartServices += $_.name
-           }
+            if ($_.status -ne "Stopped") {        
+                    $StopServices += $_.name
+            }
         }
-        ServiceHandler -Action START -ReturnResponseOutput True
+        Write-Host "Stopping Services" -ForegroundColor White -BackgroundColor Green
+        ServiceHandler -Action STOP -ReturnResponseOutput True
+
+        if (($ReturnResponse.Status | Sort-Object -Unique).count -eq "1") {
+            ResetWSUS
+            $StartServices = New-Object -TypeName System.Collections.ArrayList
+            ServiceHandler -Action GET -ReturnResponseOutput False
+            $ReturnResponse | foreach {   
+                if ($_.status -ne "Started") {        
+                        $StartServices += $_.name
+                }
+            }
+            ServiceHandler -Action START -ReturnResponseOutput True
+        }
+        else {
+            Write-Host "`, Niet alle services konden gestopt worden. Het script gaat stoppen" -ForegroundColor White -BackgroundColor red
+            Start-Sleep 5
+            exit
+        }
+
+        $msg = "`n Reboot needed, do you want to reboot this computer $($env:computername)?" 
+        do {
+            $response = Read-Host -Prompt $msg
+            if ($response -eq 'y' -or $response -eq "Yes" ) {
+                Restart-Computer -Confirm
+            }
+        } until ($response -eq 'n' -or $response -eq "No")    
     }
-    else {
-        Write-Host "`, Niet alle services konden gestopt worden. Het script gaat stoppen" -ForegroundColor White -BackgroundColor red
-        Start-Sleep 5
-        exit
+    Function RestoreWSUSBAK {
+
+    }
+    Function DeleteWSUSBackup {
+    
     }
 
-    $msg = "`n Reboot needed, do you want to reboot computer $($env:computername)?" 
-    do {
-        $response = Read-Host -Prompt $msg
-        if ($response -eq 'y' -or $response -eq "Yes" ) {
-            Restart-Computer -Confirm
-        }
-    } until ($response -eq 'n' -or $response -eq "No")
+    Function CheckDismSystemHealth {
+        DISM.exe /Online /Cleanup-Image /CheckHealth
+        DISM.exe /Online /Cleanup-Image /ScanHealth
+    }
+    Function RestoreDismSystemHealth {
+        DISM.exe /Online /Cleanup-Image /Restore
+    }
 
-}
-else {
-    Write-Host "`n This Script must be runned as administrator or under a privileged account"
-    Start-Sleep 5
-    Exit
+    Function SFCVerifyOnly {        
+        sfc.exe /VerifyOnly
+    }
+    Function SFCScanNow {        
+        sfc.exe /ScanNow
+    }
+
+    Function PressAnyKey {
+        Write-Host " Press any key to continue..."
+        read-host
+    }
+
+    $MainMenu = {
+        Write-Host " **********************************************************************************************"
+        Write-Host " *                                                                                            *"
+        Write-Host " *                            Microsoft Windows Error Solutions                               *"
+        Write-Host " *                                                                                            *"
+        Write-Host " **********************************************************************************************"
+        Write-Host
+        Write-Host "   1.) Reset Microsoft Windows Update Services"
+        Write-Host "   2.) Restore Microsoft Windows Update Services settings made earlier with option 1"
+        Write-Host "   3.) Delete Microsoft Windows Update Services backup settings made earlier with option 1" 
+        Write-Host
+        Write-Host "   4.) Check SystemHealth (SFC)"
+        Write-Host "   5.) Restore SystemHealth (SFC)"
+        Write-Host
+        Write-Host "   6.) Check SystemHealth (DISM)"
+        Write-Host "   7.) Restore SystemHealth (DISM)"
+        Write-Host
+        Write-Host "   8.) Quit"
+        Write-Host
+        Write-Host " **********************************************************************************************"
+        Write-Host
+        Write-Host " Select an option and press Enter: "  -nonewline
+    }
+
+    Do {
+        cls
+        Invoke-Command $MainMenu
+        $Select = Read-Host        
+        if (!($(Get-Location).Path -eq [System.Environment]::SystemDirectory)) { Set-Location $([System.Environment])::SystemDirectory }
+        
+        Switch ($Select)
+            {
+                1 { 
+                    Write-Host "`n Start resetting Microsoft Windows Update services "
+                    RunResetWUS  
+                  }
+                2 {
+                    Write-Host "`nRestore Microsoft Windows Update Services settings" 
+                    RestoreWSUSBAK
+                  }
+                3 { 
+                    Write-Host "`n Delete Microsoft Windows Update Services backup settings "
+                    DeleteWSUSBackup         
+                   }
+                4 { 
+                    Write-Host "`n Starting sfc Healthcheck verifying only "
+                    SFCVerifyOnly         
+                   }
+                5 {
+                    Write-Host "`n Starting sfc Health Restore"
+                    SFCScanNow
+                   }
+                6 { 
+                    Write-Host "`n Starting dism Healthcheck verifying only "
+                    CheckDismSystemHealth
+                  }
+                7 { 
+                    Write-Host "`n Starting dism restoring Health"
+                    RestoreDismSystemHealth 
+                  }
+                8 {
+                    Write-Host "`n You've pressed choice $($choice): The script will be quitting in 5 seconds..." -BackgroundColor red -ForegroundColor white
+                    Start-Sleep 3
+                    Write-Host "GoodBye" -BackgroundColor red -ForegroundColor white
+                    Start-Sleep 2
+                    Exit
+                }
+            }
+        PressAnyKey
+    }
+    While ($Select -ne 8)
 }

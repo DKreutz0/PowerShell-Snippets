@@ -8,7 +8,9 @@ Verder uitwerken.
         Write-host "Checking SystemHealth"
         DISM.exe /Online /Cleanup-Image /ScanHealth
         sfc /ScanNow
-
+        
+https://learn.microsoft.com/en-us/troubleshoot/windows-server/deployment/fix-windows-update-errors?source=recommendations 
+https://gist.github.com/mavaddat/24a03fd07aa059806d58c39b06acee70#file-resetwindowsupdate-ps1-L61
 #>
 
 

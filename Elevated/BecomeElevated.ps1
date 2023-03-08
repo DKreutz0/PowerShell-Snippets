@@ -1,5 +1,3 @@
-
-
 if (!((New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)))  {
     Write-Host "Cannot become a privileged user. The script is aborting" -BackgroundColor red -ForegroundColor white
     Start-Sleep 5

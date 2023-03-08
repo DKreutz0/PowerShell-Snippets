@@ -15,14 +15,7 @@ https://gist.github.com/mavaddat/24a03fd07aa059806d58c39b06acee70#file-resetwind
 
 
 if (!((New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)))  {
-    if ($elevated) {
-        Write-Host "Cannot become a privileged user. The script is aborting" -BackgroundColor red -ForegroundColor white
-        Start-Sleep 5
-        Exit
-    } else {
-        Start-Process powershell.exe -Verb RunAs -ArgumentList ('-noprofile -noexit -file "{0}" -elevated' -f ($myinvocation.MyCommand.Definition))
-    }
-    exit
+    Start-Process powershell.exe -Verb RunAs -ArgumentList ('-Noprofile -file "{0}"' -f ($myinvocation.MyCommand.Definition))
 }
 
 if (!((New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))) {

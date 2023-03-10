@@ -4,4 +4,4 @@ Just a Bunch of PowerShell snippets and examples, scripted by an Powershell Enth
 
 You can use all code provided freely!
 
-![This is an image](https://github.com/DKreutz0/PSSnippets/blob/main/powershell.png)
+![This is an image](https://github.com/DKreutz0/PowerShell-Snippets/blob/main/logo.png)

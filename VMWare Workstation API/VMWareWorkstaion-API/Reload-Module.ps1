@@ -1,8 +1,7 @@
 ﻿
-if ($(Get-Module VMWareWorkstaion-API).Path) {
-    Remove-Module VMWareWorkstaion-API -Force
-    Import-Module VMWareWorkstaion-API -Force
-}
-else {
-    Import-Module VMWareWorkstaion-API -Force
-}
+Remove-Module VMWareWorkstaion-API -Force -ErrorAction SilentlyContinue 
+Import-Module VMWareWorkstaion-API -Force -ErrorAction SilentlyContinue
+
+Test-ModuleManifest -Path "$PSScriptRoot\VMWareWorkstaion-API.psd1"
+
+$VMwareWorkstationConfigParameters

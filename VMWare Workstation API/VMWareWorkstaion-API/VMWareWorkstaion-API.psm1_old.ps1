@@ -10,6 +10,8 @@ Function Invoke-VMWareRestRequest
         [Parameter(Mandatory)]
         [ValidateSet('GET', 'PUT', 'POST', 'DELETE')]
         $Method,
+        [Parameter(Mandatory)]
+
         $Body=$Null
     )
     $Authentication = ("{0}:{1}" -f $Username,$Password)

@@ -91,7 +91,7 @@ else {
 
                             if ($AdUserThumbprints -contains $X509ImportCertificate) {
 
-                                $AdUserThumbprints | foreach { if ($_ -eq $X509ImportCertificate) { $Thumbprint = $_.Thumbprint} }
+                                $AdUserThumbprints | ForEach-Object { if ($_ -eq $X509ImportCertificate) { $Thumbprint = $_.Thumbprint} }
                                 Write-Host "`n -------------------------------------------------------------------------------------------------------------------------------------------- `n"
                                 Write-Host "The certificate with thumbprint: $($Thumbprint) from location: $($Cert) is already linked to the user: $($GetADUser)"
                             }

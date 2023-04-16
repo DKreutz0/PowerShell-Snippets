@@ -96,8 +96,8 @@ else {
                                 Write-Host "The certificate with thumbprint: $($Thumbprint) from location: $($Cert) is already linked to the user: $($GetADUser)"
                             }
                             else{
+                                Set-AdUser -Server $DomainController $GetADUser -Certificates @{add=$X509Certificate} -ErrorAction break
                                 Write-Host "`n -------------------------------------------------------------------------------------------------------------------------------------------- `n"
-                                Set-AdUser -Server $DomainController $GetADUser -Certificates @{add=$X509Certificate}
                                 Write-Host "Adding Certifcate on DC $($DomainController) under User: $($GetADUser). The Following Certificate $($X509Certificate.subject) with thumbprint $($X509Certificate.Thumbprint) and path $($Cert)"
                             }
                         }
@@ -108,7 +108,7 @@ else {
                 }
             }
             else {
-                Write-Error "DomainController not Reachable" -ErrorAction Continue
+                Write-Error "DomainController not Reachable" -ErrorAction Stop
             }
         }
         catch {

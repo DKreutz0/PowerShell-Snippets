@@ -167,7 +167,7 @@ else {
                 else {
                     $TempFile = $(New-TemporaryFile).FullName
                     Start-Process "C:\Windows\System32\certutil.exe" -ArgumentList "-f -Encode $($_.FullName) $($_.FullName)" -PassThru -NoNewWindow -Wait -RedirectStandardOutput $TempFile -ErrorAction Stop
-                    $Content = Get-Content -Path $TempFile -ErrorAction Stop | Select-Object -First 3 | Select -Last 1
+                    $Content = Get-Content -Path $TempFile -ErrorAction Stop | Select-Object -First 3 | Select-Object -Last 1
 
                     if ($Content -eq "CertUtil: -encode command completed successfully.") {
                         $Cert = Convert-CertficateToDerFormat -File $_.FullName

@@ -122,8 +122,6 @@ else {
 
         $Certificates = Get-ChildItem -Path $BaseFolder -Force -Recurse -Include "*.cer","*.crt","*.der","*.p7b","*.pfx" | ForEach-Object {
 
-            write-host "total certificate files found" $($certificates).Count
-
             if ($_.Extension -eq ".p7b") {
 
                 $CertutilArgs = @("-ca.chain","$($_.FullName)")
@@ -193,5 +191,8 @@ else {
     catch {
          Write-Error "Error Processing certificates import" $_ -ErrorAction Continue
     }
+    
+    Write-Host "total certificate files found $($certificates).Count under $($BaseFolder)"
+    
     Stop-Transcript
 }

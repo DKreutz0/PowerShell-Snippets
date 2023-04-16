@@ -179,8 +179,8 @@ else {
             }
 
             if ($_.Extension -eq ".pfx") {
-                Write-Host "PFX File found, please enter the password for teh PFX file" $_.FullName
-                Get-PfxCertificate -FilePath $_.FullName |
+                Write-Host "PFX File found, please enter the password for the PFX file" $_.FullName
+                Get-PfxCertificate -FilePath $_.FullName 
                 Export-Certificate -FilePath $_.FullName.Replace("pfx","cer") -Type CERT
                 $Cert = Convert-CertficateToDerFormat -File  $_.FullName.Replace("pfx","cer")
                 Import-AD -Directory $_.Directory.FullName -Cert $($Cert)

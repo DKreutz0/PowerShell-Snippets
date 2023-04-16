@@ -1,6 +1,9 @@
 
+#the Aduser must have a machting description filled with the folder name where the certificate is placed. Where-Object { $_.Description -Match $Directory.Name}
+
 $DomainName = "test.lab.lan"
 $ActiveDirectoryOrganizationUnit = "OU=1,OU=2,OU=3,DC=test,DC=lab,DC=lan"
+$BaseFolder = "C:\Certificates\"
 
 if ((!(New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))) {
     Write-Error "Run this script under a privileged account or put the files in folder where you have full control"
@@ -8,7 +11,7 @@ if ((!(New-Object Security.Principal.WindowsPrincipal([Security.Principal.Window
     Exit
 }
 else {
-    $BaseFolder = "C:\Gemeenten\"
+
 
     Start-Transcript -Path $("$($BaseFolder)\transcipt.log") -Append -Force
 
@@ -80,7 +83,7 @@ else {
 
                         if ($UserCertificates) {
 
-                            $UserCertificates.Certificates | foreach {
+                            $UserCertificates.Certificates | ForEach-Object {
                                 $AdUserThumbprints += New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 $_
                             }
                                 $X509ImportCertificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2

@@ -60,6 +60,7 @@ else {
                 }
             })]
             [System.IO.FileInfo]$Directory,
+            [Parameter(Mandatory)]
             [string]$Cert
         )
        try {

@@ -58,17 +58,17 @@ Function Type-ClipBoard {
             Start-Sleep -Seconds $SecondsWaitBeforeTyping
             Copyto-RDPWindow
 
-            $result = [System.Windows.Forms.MessageBox]::Show("Wil je nog meer typen?", "Typen voltooid", [System.Windows.Forms.MessageBoxButtons]::YesNo)
+            $result = [System.Windows.Forms.MessageBox]::Show((New-Object system.windows.forms.form -Property @{Topmost = $true}),"Wil je nog meer typen?", "Typen voltooid", [System.Windows.Forms.MessageBoxButtons]::YesNo)
 
             if ($result -eq [System.Windows.Forms.DialogResult]::No) {
+                [system.windows.forms.sendkeys]::Flush()
                 $form.Close()
-                break
-            }
+            } 
         })
                 
     $form.Controls.Add($txtInput)
     $form.Controls.Add($btnSimulate)
-    $form.ShowDialog()
+    $form.ShowDialog((New-Object system.windows.forms.form -Property @{Topmost = $true}))
     }
     else {
         Write-Host "LET OP!".PadLeft(54).PadRight(105) -ForegroundColor red -BackgroundColor white

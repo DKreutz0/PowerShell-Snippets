@@ -5,7 +5,10 @@ $SecondsWaitBeforeTyping = 10 # ressponstime before start typing
 $language = "en" #  Language: "en" of "nl" Dutch or English
 
 
-# dont change anything after this line:
+# Do not change anything after this line:
+
+Add-Type -AssemblyName Microsoft.VisualBasic -ErrorAction Stop
+Add-Type -AssemblyName System.windows.forms -ErrorAction Stop
 
 if ($language -ne "en" -and $language -ne "nl") {
     $language = "en" # 
@@ -13,7 +16,7 @@ if ($language -ne "en" -and $language -ne "nl") {
 
 $translations = @{
     "en" = @{
-        "title" = "Clipboard Typing Simulator"
+        "title" = "Clipboard RDPConsole Typer"
         "buttonType" = "Type Text"
         "doneTyping" = "Typing completed"
         "moreTyping" = "Would you like to type more?"
@@ -27,7 +30,7 @@ $translations = @{
         "done" = " DONE! "
     }
     "nl" = @{
-        "title" = "Klembord Typ Simulatie"
+        "title" = "Klembord RDPConsole Typer"
         "buttonType" = "Typ Tekst"
         "doneTyping" = "Typen voltooid"
         "moreTyping" = "Wil je nog meer typen?"
@@ -42,12 +45,12 @@ $translations = @{
     }
 }
 
-Function Get-Text($key) {
-    return $translations[$language][$key]
+Function Get-Text($Key) {
+    return $translations[$language][$Key]
 }
 
-Function Escape-SendKeysChar($char) {
-    switch ($char) {
+Function Escape-SendKeysChar($Char) {
+    switch ($Char) {
         "{" { return "{{}" }
         "}" { return "{}}" }
         "+" { return "{+}" }
@@ -56,18 +59,18 @@ Function Escape-SendKeysChar($char) {
         "~" { return "{~}" }
         "(" { return "{(}" }
         ")" { return "{)}" }
-        default { return $char }
+        default { return $Char }
     }
 }
 
 Function CopyTo-RDPWindow {
-    foreach ($char in $textToType.ToCharArray()) {
-        switch ($char) {
+    foreach ($Char in $TextToType.ToCharArray()) {
+        switch ($Char) {
             "`t" { [System.Windows.Forms.SendKeys]::SendWait("{TAB}") }
             "`n" { [System.Windows.Forms.SendKeys]::SendWait("~") }
             " "  { [System.Windows.Forms.SendKeys]::SendWait(" ") }
             default {
-                $escaped = Escape-SendKeysChar $char
+                $escaped = Escape-SendKeysChar $Char
                 [System.Windows.Forms.SendKeys]::SendWait($escaped)
             }
         }
@@ -77,11 +80,8 @@ Function CopyTo-RDPWindow {
 
 Function Type-ClipBoard {
 
-    [void]::([System.Reflection.Assembly]::LoadWithPartialName("Microsoft.VisualBasic"))
-    [void]::([System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms"))
-
     if ($guiMode) {
-        Add-Type -AssemblyName System.Windows.Forms
+
         $form = New-Object System.Windows.Forms.Form
         $form.Text = Get-Text "title"
         $form.Size = New-Object System.Drawing.Size(400, 300)
@@ -99,20 +99,20 @@ Function Type-ClipBoard {
         $txtInput.AppendText([windows.forms.clipboard]::GetText())
 
         $btnSimulate.Add_Click({
-            $textToType = $txtInput.Text
-            $textToType = $textToType -replace "`r`n", "`n"
+            $TextToType = $txtInput.Text
+            $TextToType = $TextToType -replace "`r`n", "`n"
 
             Start-Sleep -Seconds $SecondsWaitBeforeTyping
             Copyto-RDPWindow
 
-            $result = [System.Windows.Forms.MessageBox]::Show(
+            $ResultMessageBox = [System.Windows.Forms.MessageBox]::Show(
                 (New-Object system.windows.forms.form -Property @{Topmost = $true}),
                 (Get-Text "moreTyping"),
                 (Get-Text "doneTyping"),
                 [System.Windows.Forms.MessageBoxButtons]::YesNo
             )
 
-            if ($result -eq [System.Windows.Forms.DialogResult]::No) {
+            if ($ResultMessageBox -eq [System.Windows.Forms.DialogResult]::No) {
                 [system.windows.forms.sendkeys]::Flush()
                 $form.Close()
             } 
@@ -123,28 +123,26 @@ Function Type-ClipBoard {
         $form.ShowDialog((New-Object system.windows.forms.form -Property @{Topmost = $true}))
     }
     else {
-        Write-Host (Get-Text "consoleWarning1").PadLeft(54).PadRight(105) -ForegroundColor red -BackgroundColor white
-        Write-Host " " -BackgroundColor white -NoNewLine; Write-Host (Get-Text "consoleWarning2").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor white
-        Write-Host " " -BackgroundColor white -NoNewLine; Write-Host (Get-Text "consoleWarning3").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor white
-        Write-Host " " -BackgroundColor white -NoNewLine; Write-Host (Get-Text "consoleWarning4").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor white
-        Write-Host " " -BackgroundColor white -NoNewLine; Write-Host (Get-Text "consoleWarning5").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor white
-        Write-Host " " -BackgroundColor white -NoNewLine; Write-Host "".PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor white
-        Write-Host " " -BackgroundColor white -NoNewLine; Write-Host (Get-Text "consoleWarning6").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor white
-        Write-Host " ".PadRight(105) -ForegroundColor red -BackgroundColor white
+        Write-Host (Get-Text "consoleWarning1").PadLeft(54).PadRight(105) -ForegroundColor Red -BackgroundColor White
+        Write-Host " " -BackgroundColor White -NoNewLine; Write-Host (Get-Text "consoleWarning2").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor White
+        Write-Host " " -BackgroundColor White -NoNewLine; Write-Host (Get-Text "consoleWarning3").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor White
+        Write-Host " " -BackgroundColor White -NoNewLine; Write-Host (Get-Text "consoleWarning4").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor White
+        Write-Host " " -BackgroundColor White -NoNewLine; Write-Host (Get-Text "consoleWarning5").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor White
+        Write-Host " " -BackgroundColor White -NoNewLine; Write-Host "".PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor White
+        Write-Host " " -BackgroundColor White -NoNewLine; Write-Host (Get-Text "consoleWarning6").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor White
+        Write-Host " ".PadRight(105) -ForegroundColor Red -BackgroundColor White
         Write-Host ""
         [void](Read-Host -Prompt (Get-Text "consoleContinue"))
     
         Start-Sleep $SecondsWaitBeforeTyping 
     
-        $textToType = $([windows.forms.clipboard]::GetText())
-        $textToType = $textToType -replace "`r`n", "`n"
+        $TextToType = $([windows.forms.clipboard]::GetText())
+        $TextToType = $TextToType -replace "`r`n", "`n"
 
         Copyto-RDPWindow
    
-        Write-Host (Get-Text "done") -BackgroundColor green -ForegroundColor black
+        Write-Host (Get-Text "done") -BackgroundColor Green -ForegroundColor black
     }
-
     [system.windows.forms.sendkeys]::Flush()
 }
-
 Type-ClipBoard

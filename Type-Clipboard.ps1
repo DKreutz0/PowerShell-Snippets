@@ -2,7 +2,7 @@
 $guiMode = $true # true of false: Use Gui OR Console
 $inputSpeed = 50 #  typespeed in RDP session
 $SecondsWaitBeforeTyping = 10 # ressponstime before start typing
-$language = "nl" #  Language: "en" of "nl" Dutch or English
+$language = "en" #  Language: "en" of "nl" Dutch or English
 
 if ($language -ne "en" -and $language -ne "nl") {
     $language = "en" # 
@@ -73,6 +73,10 @@ Function CopyTo-RDPWindow {
 }
 
 Function Type-ClipBoard {
+
+    [void]::([System.Reflection.Assembly]::LoadWithPartialName("Microsoft.VisualBasic"))
+    [void]::([System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms"))
+
     if ($guiMode) {
         Add-Type -AssemblyName System.Windows.Forms
         $form = New-Object System.Windows.Forms.Form
@@ -129,9 +133,6 @@ Function Type-ClipBoard {
     
         Start-Sleep $SecondsWaitBeforeTyping 
     
-        [void]([System.Reflection.Assembly]::LoadWithPartialName("Microsoft.VisualBasic"))
-        [void]([System.Reflection.Assembly]::LoadWithPartialName("system.windows.forms"))
-
         $textToType = $([windows.forms.clipboard]::GetText())
         $textToType = $textToType -replace "`r`n", "`n"
 

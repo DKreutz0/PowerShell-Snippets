@@ -1,6 +1,48 @@
-$guiMode = $true # true or false vanuit de console of een dialogbox
-$inputSpeed = 50 # typsnelheid in het RDP scherm
-$SecondsWaitBeforeTyping = 10 # tijd tussen het drukken op de knop en alvorens het script begint
+# Instellingen
+$guiMode = $true # true of false: gebruik GUI of console
+$inputSpeed = 50 # typsnelheid
+$SecondsWaitBeforeTyping = 10 # wachttijd voor typen
+$language = "nl" # taal: "en" of "nl"
+
+if ($language -ne "en" -and $language -ne "nl") {
+    $language = "nl" # standaard Nederlands
+}
+
+# Talenpakket
+$translations = @{
+    "en" = @{
+        "title" = "Clipboard Typing Simulator"
+        "buttonType" = "Type Text"
+        "doneTyping" = "Typing completed"
+        "moreTyping" = "Would you like to type more?"
+        "consoleWarning1" = "WARNING!"
+        "consoleWarning2" = "If you want to type in an RDP session, make sure it is not fullscreen (Shift key won't work)."
+        "consoleWarning3" = "You have $SecondsWaitBeforeTyping seconds to place your cursor in the correct window."
+        "consoleWarning4" = "Do not close this window! Wait until the script is done."
+        "consoleWarning5" = "Strange effects may occur if you don't click in time."
+        "consoleWarning6" = "Using this script is at your own risk!"
+        "consoleContinue" = "Press (ANY-KEY) to continue, or (ctrl)+(C) to cancel"
+        "done" = " DONE! "
+    }
+    "nl" = @{
+        "title" = "Klembord Typ Simulatie"
+        "buttonType" = "Typ Tekst"
+        "doneTyping" = "Typen voltooid"
+        "moreTyping" = "Wil je nog meer typen?"
+        "consoleWarning1" = "LET OP!"
+        "consoleWarning2" = "Als je in een RDP sessie wilt typen, zorg dan dat deze niet fullscreen is (Shift-toets werkt dan niet)."
+        "consoleWarning3" = "Je hebt $SecondsWaitBeforeTyping seconden om je cursor te plaatsen in het venster waar je wilt typen."
+        "consoleWarning4" = "Sluit dit venster niet! Wacht tot het script klaar is."
+        "consoleWarning5" = "Als je te laat klikt, kunnen er vreemde effecten ontstaan."
+        "consoleWarning6" = "Gebruik van dit script is op eigen risico!"
+        "consoleContinue" = "Druk op een toets om door te gaan, of (ctrl)+(C) om te annuleren"
+        "done" = " KLAAR! "
+    }
+}
+
+Function Get-Text($key) {
+    return $translations[$language][$key]
+}
 
 Function Escape-SendKeysChar($char) {
     switch ($char) {
@@ -20,7 +62,7 @@ Function CopyTo-RDPWindow {
     foreach ($char in $textToType.ToCharArray()) {
         switch ($char) {
             "`t" { [System.Windows.Forms.SendKeys]::SendWait("{TAB}") }
-            "`n" { [System.Windows.Forms.SendKeys]::SendWait("~") }  # ENTER fix
+            "`n" { [System.Windows.Forms.SendKeys]::SendWait("~") }
             " "  { [System.Windows.Forms.SendKeys]::SendWait(" ") }
             default {
                 $escaped = Escape-SendKeysChar $char
@@ -32,11 +74,10 @@ Function CopyTo-RDPWindow {
 }
 
 Function Type-ClipBoard {
-   
     if ($guiMode) {
         Add-Type -AssemblyName System.Windows.Forms
         $form = New-Object System.Windows.Forms.Form
-        $form.Text = "Clipboard Typing Simulator"
+        $form.Text = Get-Text "title"
         $form.Size = New-Object System.Drawing.Size(400, 300)
 
         $txtInput = New-Object System.Windows.Forms.TextBox
@@ -46,7 +87,7 @@ Function Type-ClipBoard {
         $txtInput.Height = 150
 
         $btnSimulate = New-Object System.Windows.Forms.Button
-        $btnSimulate.Text = "Typ Tekst"
+        $btnSimulate.Text = Get-Text "buttonType"
         $btnSimulate.Dock = 'Bottom'
 
         $txtInput.AppendText([windows.forms.clipboard]::GetText())
@@ -58,7 +99,12 @@ Function Type-ClipBoard {
             Start-Sleep -Seconds $SecondsWaitBeforeTyping
             Copyto-RDPWindow
 
-            $result = [System.Windows.Forms.MessageBox]::Show((New-Object system.windows.forms.form -Property @{Topmost = $true}),"Wil je nog meer typen?", "Typen voltooid", [System.Windows.Forms.MessageBoxButtons]::YesNo)
+            $result = [System.Windows.Forms.MessageBox]::Show(
+                (New-Object system.windows.forms.form -Property @{Topmost = $true}),
+                (Get-Text "moreTyping"),
+                (Get-Text "doneTyping"),
+                [System.Windows.Forms.MessageBoxButtons]::YesNo
+            )
 
             if ($result -eq [System.Windows.Forms.DialogResult]::No) {
                 [system.windows.forms.sendkeys]::Flush()
@@ -66,35 +112,36 @@ Function Type-ClipBoard {
             } 
         })
                 
-    $form.Controls.Add($txtInput)
-    $form.Controls.Add($btnSimulate)
-    $form.ShowDialog((New-Object system.windows.forms.form -Property @{Topmost = $true}))
+        $form.Controls.Add($txtInput)
+        $form.Controls.Add($btnSimulate)
+        $form.ShowDialog((New-Object system.windows.forms.form -Property @{Topmost = $true}))
     }
     else {
-        Write-Host "LET OP!".PadLeft(54).PadRight(105) -ForegroundColor red -BackgroundColor white
-        Write-Host " " -BackgroundColor white -NoNewLine;Write-Host " Als je in een RDP sessie wilt type zorg dan dat deze niet FullScreen staat (Shift key werkt dan niet)".PadRight(103) -NoNewLine;Write-Host " " -BackgroundColor white;
-        Write-Host " " -BackgroundColor white -NoNewLine;Write-Host " Als je doorgaat heb je $($SecondsWait) seconden om je cursor in het venster te plaatsen waar je wilt typen.".PadRight(103) -NoNewLine;Write-Host " " -BackgroundColor white;
-        Write-Host " " -BackgroundColor white -NoNewLine;Write-Host " Klik niet weg! wacht tot het script klaar is".PadRight(103) -NoNewLine;Write-Host " " -BackgroundColor white;
-        Write-Host " " -BackgroundColor white -NoNewLine;Write-Host " Doe je dit wel of klik je niet optijd in het juiste scherm kunnen er vreemde effecten ontstaan.".PadRight(103) -NoNewLine;Write-Host " " -BackgroundColor white;
-        Write-Host " " -BackgroundColor white -NoNewLine;Write-Host "".PadRight(103) -NoNewLine;Write-Host " " -BackgroundColor white;
-        Write-Host " " -BackgroundColor white -NoNewLine;Write-Host " Het gebruikt van dit script is dan ook op eigen risico!!".PadRight(103) -NoNewLine;Write-Host " " -BackgroundColor white;
+        Write-Host (Get-Text "consoleWarning1").PadLeft(54).PadRight(105) -ForegroundColor red -BackgroundColor white
+        Write-Host " " -BackgroundColor white -NoNewLine; Write-Host (Get-Text "consoleWarning2").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor white
+        Write-Host " " -BackgroundColor white -NoNewLine; Write-Host (Get-Text "consoleWarning3").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor white
+        Write-Host " " -BackgroundColor white -NoNewLine; Write-Host (Get-Text "consoleWarning4").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor white
+        Write-Host " " -BackgroundColor white -NoNewLine; Write-Host (Get-Text "consoleWarning5").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor white
+        Write-Host " " -BackgroundColor white -NoNewLine; Write-Host "".PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor white
+        Write-Host " " -BackgroundColor white -NoNewLine; Write-Host (Get-Text "consoleWarning6").PadRight(103) -NoNewLine; Write-Host " " -BackgroundColor white
         Write-Host " ".PadRight(105) -ForegroundColor red -BackgroundColor white
         Write-Host ""
-        [void]::(Read-Host -Prompt "Press (ANY-KEY) to continue, or (ctrl)+(C) to cancel")
+        [void](Read-Host -Prompt (Get-Text "consoleContinue"))
     
         Start-Sleep $SecondsWaitBeforeTyping 
     
-        [void]::([System.Reflection.Assembly]::LoadWithPartialName("Microsoft.VisualBasic"))
-        [void]::([System.Reflection.Assembly]::LoadWithPartialName("system.windows.forms"))
+        [void]([System.Reflection.Assembly]::LoadWithPartialName("Microsoft.VisualBasic"))
+        [void]([System.Reflection.Assembly]::LoadWithPartialName("system.windows.forms"))
 
         $textToType = $([windows.forms.clipboard]::GetText())
         $textToType = $textToType -replace "`r`n", "`n"
 
         Copyto-RDPWindow
    
-        Write-Host " DONE! " -BackgroundColor green -ForegroundColor black
+        Write-Host (Get-Text "done") -BackgroundColor green -ForegroundColor black
     }
-    
+
     [system.windows.forms.sendkeys]::Flush()
 }
+
 Type-ClipBoard

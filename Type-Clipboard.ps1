@@ -1,8 +1,11 @@
-# Instellingen
+# Settings
 $guiMode = $true # true of false: Use Gui OR Console
 $inputSpeed = 50 #  typespeed in RDP session
 $SecondsWaitBeforeTyping = 10 # ressponstime before start typing
 $language = "en" #  Language: "en" of "nl" Dutch or English
+
+
+# dont change anything after this line:
 
 if ($language -ne "en" -and $language -ne "nl") {
     $language = "en" # 

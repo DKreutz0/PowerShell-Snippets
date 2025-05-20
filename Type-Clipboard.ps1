@@ -1,14 +1,13 @@
 # Instellingen
-$guiMode = $true # true of false: gebruik GUI of console
-$inputSpeed = 50 # typsnelheid
-$SecondsWaitBeforeTyping = 10 # wachttijd voor typen
-$language = "nl" # taal: "en" of "nl"
+$guiMode = $true # true of false: Use Gui OR Console
+$inputSpeed = 50 #  typespeed in RDP session
+$SecondsWaitBeforeTyping = 10 # ressponstime before start typing
+$language = "nl" #  Language: "en" of "nl" Dutch or English
 
 if ($language -ne "en" -and $language -ne "nl") {
-    $language = "nl" # standaard Nederlands
+    $language = "en" # 
 }
 
-# Talenpakket
 $translations = @{
     "en" = @{
         "title" = "Clipboard Typing Simulator"
